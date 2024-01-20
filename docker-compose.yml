@@ -1,10 +1,17 @@
 version: '3.8'
 services:
+
+  watchtower:
+    image: containrrr/watchtower
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    command: --cleanup true
+
   homeassistant:
     container_name: homeassistant
     image: "ghcr.io/home-assistant/home-assistant:stable"
     volumes:
-      - /home/charsiu/homeassistant:/config
+      - /home/charsiu/home-apps/homeassistant:/config
       - /etc/localtime:/etc/localtime:ro
     devices:
       - /dev/ttyUSB0:/dev/ttyUSB0
@@ -21,29 +28,18 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
     network_mode: host
 
-  mealie-frontend:
-    image: hkotel/mealie:frontend-v1.0.0beta-5
-    container_name: mealie-frontend
-    environment:
-      # Set Frontend ENV Variables Here
-      - API_URL=http://mealie-api:9000
-    restart: always
+  mealie:
+    image: ghcr.io/mealie-recipes/mealie:v1.0.0-RC2
+    container_name: mealie
     ports:
-      - "9926:3000"
-    volumes:
-      - mealie_data:/app/data/
-
-  mealie-api:
-    image: hkotel/mealie:api-v1.0.0beta-5
-    container_name: mealie-api
+      - "9925:9000"
     deploy:
       resources:
         limits:
           memory: 1000M
     volumes:
-      - mealie_data:/app/data/
+      - mealie-data:/app/data/
     environment:
-      # Set Backend ENV Variables Here
       - ALLOW_SIGNUP=true
       - PUID=1000
       - PGID=1000
@@ -61,12 +57,12 @@ services:
       - PGID=1000
       - TZ=Greenwich
     volumes:
-      - /home/heimdall/config:/config
+      - /home/home-apps/heimdall/config:/config
     ports:
       - 80:80
       - 443:433
     restart: unless-stopped
 
 volumes:
-  mealie_data:
+  mealie-data:
     driver: local
